@@ -1,6 +1,7 @@
 package com.feedwise.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -25,6 +26,10 @@ public class ImprovementTask {
 
     /** 指派给开发/测试人员 */
     private Long assigneeId;
+
+    /** 指派对象姓名（列表展示用，非表字段） */
+    @TableField(exist = false)
+    private String assigneeName;
 
     /** P1/P2/P3，仅 PM 可设定 */
     private String priority;

@@ -2,7 +2,9 @@ package com.feedwise.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.feedwise.entity.OperationLog;
+import com.feedwise.entity.User;
 import com.feedwise.mapper.OperationLogMapper;
+import com.feedwise.mapper.UserMapper;
 import io.github.biglv666.statekit.history.HistoryEntry;
 import io.github.biglv666.statekit.history.HistoryQueryService;
 import org.springframework.stereotype.Service;
@@ -21,10 +23,13 @@ public class OperationLogService {
 
     private final OperationLogMapper operationLogMapper;
     private final HistoryQueryService historyQueryService;
+    private final UserMapper userMapper;
 
-    public OperationLogService(OperationLogMapper operationLogMapper, HistoryQueryService historyQueryService) {
+    public OperationLogService(OperationLogMapper operationLogMapper, HistoryQueryService historyQueryService,
+                               UserMapper userMapper) {
         this.operationLogMapper = operationLogMapper;
         this.historyQueryService = historyQueryService;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -74,9 +79,17 @@ public class OperationLogService {
         return items;
     }
 
-    /** state-kit 历史只有操作人 id，展示名按 ID 前缀展示即可（与操作日志互补）。 */
+    /** state-kit 历史只有操作人 id，映射为姓名（走 cache-kit 缓存的用户查询）。 */
     private String operatorDisplay(String operatorId) {
-        return operatorId == null || operatorId.isBlank() ? "system" : "用户#" + operatorId;
+        if (operatorId == null || operatorId.isBlank()) {
+            return "system";
+        }
+        try {
+            User user = userMapper.getUserById(Long.parseLong(operatorId));
+            return user == null ? "用户#" + operatorId : user.getDisplayName();
+        } catch (NumberFormatException e) {
+            return "用户#" + operatorId;
+        }
     }
 
     /** 时间线条目。 */

@@ -34,7 +34,9 @@
             <StateTag :value="row.status" :dict="FEEDBACK_STATUS" />
           </template>
         </el-table-column>
-        <el-table-column prop="createdBy" label="录入人ID" width="90" />
+        <el-table-column label="录入人" width="100">
+          <template #default="{ row }">{{ row.createdByName || ('用户#' + row.createdBy) }}</template>
+        </el-table-column>
         <el-table-column label="时间" width="170">
           <template #default="{ row }">{{ fmt(row.createdAt) }}</template>
         </el-table-column>

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -116,7 +117,31 @@ public class ImprovementTaskService {
                 .eq(status != null && !status.isBlank(), ImprovementTask::getStatus, status)
                 .eq(assigneeId != null, ImprovementTask::getAssigneeId, assigneeId)
                 .orderByDesc(ImprovementTask::getId);
-        return taskMapper.selectScoped(page, qw);
+        Page<ImprovementTask> result = taskMapper.selectScoped(page, qw);
+        fillAssigneeNames(result.getRecords());
+        return result;
+    }
+
+    /** 批量填充指派对象姓名。 */
+    private void fillAssigneeNames(List<ImprovementTask> records) {
+        java.util.Set<Long> ids = new java.util.HashSet<>();
+        for (ImprovementTask task : records) {
+            if (task.getAssigneeId() != null) {
+                ids.add(task.getAssigneeId());
+            }
+        }
+        Map<Long, String> names = new java.util.HashMap<>();
+        for (Long id : ids) {
+            com.feedwise.entity.User user = userMapper.getUserById(id);
+            if (user != null) {
+                names.put(id, user.getDisplayName());
+            }
+        }
+        for (ImprovementTask task : records) {
+            if (task.getAssigneeId() != null) {
+                task.setAssigneeName(names.getOrDefault(task.getAssigneeId(), "用户#" + task.getAssigneeId()));
+            }
+        }
     }
 
     /**
@@ -124,6 +149,7 @@ public class ImprovementTaskService {
      */
     public ImprovementTask getOwned(Long taskId, Long viewerId, String viewerRole) {
         ImprovementTask task = requireExists(taskId);
+        fillAssigneeNames(java.util.List.of(task));
         if ("DEV".equals(viewerRole) && (task.getAssigneeId() == null || !task.getAssigneeId().equals(viewerId))) {
             throw new BusinessException(FeedWiseErrorCode.DATA_NOT_OWNED);
         }

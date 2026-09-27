@@ -6,6 +6,9 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: feedwise
       TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     ports:
       - "3308:3306"   # 宿主机 3308，避开本机原生 MySQL(3306)
     volumes:

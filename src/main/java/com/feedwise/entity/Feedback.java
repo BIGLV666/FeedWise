@@ -1,6 +1,7 @@
 package com.feedwise.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -32,6 +33,10 @@ public class Feedback {
 
     /** 录入客服 id（data-scope 行级归属列） */
     private Long createdBy;
+
+    /** 录入客服姓名（列表展示用，非表字段） */
+    @TableField(exist = false)
+    private String createdByName;
 
     private LocalDateTime createdAt;
 }

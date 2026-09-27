@@ -151,13 +151,13 @@ public class MockLlmClient implements LlmClient {
     /** 起草模式：为已确认问题输出 draft_requirement 工具调用（确定性模板）。 */
     private List<LlmToolCall> draftCalls(JsonNode root) {
         JsonNode issue = root.path("issue");
-        JsonNode feedbacks = root.path("feedbacks");
+        int feedbackCount = root.path("feedbackCount").asInt(0);
         ObjectNode args = objectMapper.createObjectNode();
         args.put("issueId", issue.path("id").asLong());
         args.put("title", "改进：" + issue.path("title").asText());
         args.put("background", "近一周收到多条与「" + issue.path("module").asText()
                 + "」模块相关的用户反馈，问题现象： " + issue.path("problem").asText()
-                + "。涉及原始反馈 " + feedbacks.size() + " 条，可在候选问题详情回查原文。");
+                + "。涉及原始反馈 " + feedbackCount + " 条，可在候选问题详情回查原文。");
         args.put("description", "针对「" + issue.path("demand").asText()
                 + "」进行功能改进：明确问题根因，优化对应流程与提示，保证改动后用户可在界面内自助完成相关操作。");
         ArrayNode acceptance = args.putArray("acceptance");

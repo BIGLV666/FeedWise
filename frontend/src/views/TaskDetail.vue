@@ -24,7 +24,7 @@
           <el-descriptions-item label="任务说明" :span="2">{{ detail.task.detail || '-' }}</el-descriptions-item>
           <el-descriptions-item label="来源草稿">#{{ detail.task.draftId }}</el-descriptions-item>
           <el-descriptions-item label="来源候选问题">#{{ detail.task.issueId }}</el-descriptions-item>
-          <el-descriptions-item label="指派给">用户#{{ detail.task.assigneeId }}</el-descriptions-item>
+          <el-descriptions-item label="指派给">{{ detail.task.assigneeName || ('用户#' + detail.task.assigneeId) }}</el-descriptions-item>
           <el-descriptions-item label="验证结果">{{ detail.task.verifyResult || '-' }}</el-descriptions-item>
         </el-descriptions>
       </template>
@@ -48,6 +48,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '../api/request'
 import { auth } from '../store/auth'

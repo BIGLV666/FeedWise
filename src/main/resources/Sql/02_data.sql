@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 -- FeedWise 演示数据（密码统一 123456，BCrypt 哈希固定）
 
 INSERT INTO fw_user (id, username, password, display_name, role) VALUES

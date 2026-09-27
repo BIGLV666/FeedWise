@@ -24,7 +24,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="assigneeId" label="指派给" width="80" />
+        <el-table-column label="指派给" width="100">
+          <template #default="{ row }">{{ row.assigneeName || (row.assigneeId ? '用户#' + row.assigneeId : '-') }}</template>
+        </el-table-column>
         <el-table-column label="验证结果" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">{{ row.verifyResult || '-' }}</template>
         </el-table-column>

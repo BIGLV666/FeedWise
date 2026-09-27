@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 -- FeedWise 建表脚本（MySQL 8.4）
 -- 由 docker-compose 挂载到 /docker-entrypoint-initdb.d 首次启动自动执行；
 -- OutboxPro 的 outbox 表与 state-kit 的 sk_transition_history 由组件启动时自动建。

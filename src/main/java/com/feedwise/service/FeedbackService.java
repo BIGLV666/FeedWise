@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 反馈服务：录入、批量导入、查询。
@@ -120,7 +121,29 @@ public class FeedbackService {
                 .eq(status != null && !status.isBlank(), Feedback::getStatus, status)
                 .like(keyword != null && !keyword.isBlank(), Feedback::getContent, keyword)
                 .orderByDesc(Feedback::getId);
-        return feedbackMapper.selectScoped(page, qw);
+        Page<Feedback> result = feedbackMapper.selectScoped(page, qw);
+        fillCreatorNames(result.getRecords());
+        return result;
+    }
+
+    /** 批量填充录入客服姓名（走 cache-kit 缓存的用户查询）。 */
+    private void fillCreatorNames(List<Feedback> records) {
+        java.util.Set<Long> ids = new java.util.HashSet<>();
+        for (Feedback fb : records) {
+            if (fb.getCreatedBy() != null) {
+                ids.add(fb.getCreatedBy());
+            }
+        }
+        Map<Long, String> names = new java.util.HashMap<>();
+        for (Long id : ids) {
+            User user = userMapper.getUserById(id);
+            if (user != null) {
+                names.put(id, user.getDisplayName());
+            }
+        }
+        for (Feedback fb : records) {
+            fb.setCreatedByName(names.getOrDefault(fb.getCreatedBy(), "用户#" + fb.getCreatedBy()));
+        }
     }
 
     /**

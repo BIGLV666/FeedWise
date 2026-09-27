@@ -28,7 +28,7 @@
         <jitpack.sha.web-common>b279da8ae51d02e638659daafe00e0f21962b929</jitpack.sha.web-common>
         <jitpack.sha.state-kit>ffa09ac64783f0acb4904c88a788bcc2f0ff7473</jitpack.sha.state-kit>
         <jitpack.sha.outboxpro>dca3e54c0d77a9e7b68bab3e3b4ecb1690901eb9</jitpack.sha.outboxpro>
-        <jitpack.sha.cache-kit>8ec3135d5764184e067aa9a9f8076bac2077c022</jitpack.sha.cache-kit>
+        <jitpack.sha.cache-kit>bdfa417238a690d17b8ef2bfca667806eff05a5f</jitpack.sha.cache-kit>
         <jitpack.sha.data-scope>4c076c2e828cede7cb07e868a48f418eb1e1f301</jitpack.sha.data-scope>
     </properties>
 
