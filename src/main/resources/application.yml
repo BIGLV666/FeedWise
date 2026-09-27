@@ -1,0 +1,134 @@
+spring:
+  application:
+    name: feedwise
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:feedwise}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USERNAME:guest}
+    password: ${RABBIT_PASSWORD:guest}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+
+# ── auth-kit：不透明 token + Redis 会话；同端顶号；白名单放行登录与治理端点 ──
+auth-kit:
+  token:
+    timeout: 7d
+    active-timeout: 1d
+  session:
+    max-sessions-per-device: 1
+  whitelist:
+    - /api/auth/login
+    - /web-common/error-codes
+    - /api-governance/**
+    - /actuator/**
+
+# ── api-governance：接口治理 ──
+api:
+  governance:
+    enabled: true
+    log:
+      slow-threshold-ms: 500
+    rate-limit:
+      type: local
+      algorithm: token-bucket
+      default-limit: -1          # 默认不限，注解按需收紧
+      status-code: 429
+      message: 请求过于频繁，请稍后再试
+    metrics:
+      micrometer-enabled: true
+
+# ── concurrent-guard：幂等 + 分布式锁 ──
+guard:
+  enabled: true
+
+# ── data-scope：行级数据权限（开启即强承诺，必须配 ScopeResolver）──
+data-scope:
+  enabled: true
+
+# ── state-kit：三台状态机 + 流转历史 ──
+state-kit:
+  operator: auto
+  history:
+    enabled: true
+  machines:
+    task:
+      state-type: com.feedwise.enums.TaskStatus
+      table: improvement_task
+      status-column: status
+      id-column: id
+      id-type: java.lang.Long
+      conflict-strategy: throw
+      transitions:
+        - { from: TODO, event: START, to: IN_PROGRESS }
+        - { from: IN_PROGRESS, event: SUBMIT, to: PENDING_VERIFY }
+        - { from: PENDING_VERIFY, event: PASS, to: DONE }
+        - { from: PENDING_VERIFY, event: REJECT, to: IN_PROGRESS }
+    issue:
+      state-type: com.feedwise.enums.IssueStatus
+      table: candidate_issue
+      status-column: status
+      id-column: id
+      id-type: java.lang.Long
+      conflict-strategy: throw
+      transitions:
+        - { from: PENDING_REVIEW, event: CONFIRM, to: CONFIRMED }
+        - { from: PENDING_REVIEW, event: REJECT, to: REJECTED }
+        - { from: PENDING_REVIEW, event: MERGE, to: MERGED }
+    draft:
+      state-type: com.feedwise.enums.DraftStatus
+      table: requirement_draft
+      status-column: status
+      id-column: id
+      id-type: java.lang.Long
+      conflict-strategy: throw
+      transitions:
+        - { from: DRAFT, event: CONFIRM, to: CONFIRMED }
+        - { from: CONFIRMED, event: CONVERT, to: CONVERTED }
+
+# ── OutboxPro：批量导入事务事件 → RabbitMQ → AI 整理消费者 ──
+outboxpro:
+  enabled: true
+  producer-name: feedwise
+  schema-initialize: true
+  producer:
+    relay-enabled: true
+    batch-size: 100
+    poll-interval: 1s
+  consumer:
+    enabled: true
+    concurrency: 2
+  ops:
+    enabled: true
+
+feedwise:
+  ai:
+    provider: mock               # mock=离线确定性引擎；openai=OpenAI 兼容 function calling
+    base-url: ${AI_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:glm-4-flash}
+    timeout-ms: 20000
+    max-tool-calls: 20
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.feedwise: info

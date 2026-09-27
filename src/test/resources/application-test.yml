@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:feedwise;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+# 测试环境关闭 OutboxPro（无 RabbitMQ），AI 整理走同步触发入口
+outboxpro:
+  enabled: false
+
+feedwise:
+  ai:
+    provider: mock
