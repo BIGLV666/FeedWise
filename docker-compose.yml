@@ -7,7 +7,7 @@ services:
       MYSQL_DATABASE: feedwise
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "3308:3306"   # 宿主机 3308，避开本机原生 MySQL(3306)
     volumes:
       - ./src/main/resources/Sql:/docker-entrypoint-initdb.d:ro
       - feedwise-mysql-data:/var/lib/mysql
@@ -21,7 +21,7 @@ services:
     image: redis:7-alpine
     container_name: feedwise-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"   # 宿主机 6380，避开 cache-kit-redis(6379)
 
   rabbitmq:
     image: rabbitmq:3.13-management

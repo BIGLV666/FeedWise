@@ -23,7 +23,7 @@
 1. `fw_user` 用户（auth-kit SPI 对接，角色 SUPPORT/PM/DEV）
 2. `feedback` 用户反馈（来源/功能模块/状态/录入人）
 3. `candidate_issue` 候选问题卡片（AI 或 PM 手工创建，关联原文）
-4. `issue_feedback_link` 卡片-原文关联（一条反馈可拆入两张卡片，同卡片内不重复）
+4. `issue_feedback_link` 卡片-原文关联（实现修订：同一反馈可归入多张卡片——混合反馈拆分场景是合法路径；仅"同一张卡片内重复"被禁止）
 5. `requirement_draft` 需求草稿（AI 草稿或手写，验收条件 JSON 数组）
 6. `improvement_task` 改进任务（来自草稿，指派 + 优先级 + 验证结果）
 7. `operation_log` 操作时间线（时间/操作人/动作/说明；state-kit 流转历史并入同一时间线查询）
@@ -42,7 +42,7 @@ CAS 条件更新保证并发正确；禁跳抛 `IllegalTransitionException` → 
 ## 5. AI 约束式工具调用（不是自由发挥）
 
 - AI 只能调用注册在 `ToolRegistry` 白名单里的两个内置工具，入参按 JSON Schema 校验，业务红线在工具实现内强制：
-  - `create_candidate_issue(title, module, problem, demand, feedbackIds[])`：反馈必须存在且未处理；一张卡片内反馈不重复；产物 `ai_generated=1`、状态 PENDING_REVIEW（等待 PM 确认）。
+  - `create_candidate_issue(title, module, problem, demand, feedbackIds[])`：反馈必须存在；同一反馈不得在同一张卡片内重复；同一反馈允许归入多张卡（拆分）；产物 `ai_generated=1`、状态 PENDING_REVIEW（等待 PM 确认）。
   - `draft_requirement(issueId, title, background, description, acceptance[])`：仅对 CONFIRMED 卡片；一卡一草稿；产物 DRAFT 状态。
 - AI 无合并工具——合并只能由 PM 手工执行（AI 只在卡片备注里给"疑似相似"提示）。
 - `LlmClient` 双实现：`mock`（默认，确定性规则：模块关键词 + 现象指纹聚类；混合反馈拆两张卡；关键词相似但含义不同**不合并**）与 `openai`（OpenAI 兼容 function calling，超时/失败抛 `AiUnavailableException`）。

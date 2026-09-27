@@ -78,6 +78,7 @@ public class FeedbackService {
      */
     @Transactional
     public int importBatch(List<Feedback> items, Long operatorId) {
+        List<Long> ids = new java.util.ArrayList<>();
         for (Feedback item : items) {
             Feedback feedback = new Feedback();
             feedback.setContent(item.getContent());
@@ -87,8 +88,9 @@ public class FeedbackService {
             feedback.setStatus("UNPROCESSED");
             feedback.setCreatedBy(operatorId);
             feedbackMapper.insert(feedback);
+            // 从插入后的对象取回填的自增主键（原始 item 未经过 insert，id 为 null）
+            ids.add(feedback.getId());
         }
-        List<Long> ids = items.stream().map(Feedback::getId).toList();
         operationLogService.log("FEEDBACK", null, "FEEDBACK_IMPORTED",
                 operatorId, displayName(operatorId), "批量导入 " + items.size() + " 条反馈");
         publishBatchImported(ids, operatorId);
