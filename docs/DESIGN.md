@@ -57,7 +57,7 @@ CAS 条件更新保证并发正确；禁跳抛 `IllegalTransitionException` → 
 | api-governance | 接口限流（登录/AI 触发）、慢调用日志（500ms）、Micrometer 指标 |
 | concurrent-guard | `@Idempotent` 防重复导入/重复触发 AI/重复建任务；`@DistributedLock` 防并发转任务 |
 | state-kit | 三台状态机（CAS + 历史表 + 操作人自动带 auth-kit 上下文） |
-| cache-kit | 实体读缓存（BaseMapper 自动拦截 + `@CachedQuery` 用户查询），写后自动失效 |
+| cache-kit | 实体读缓存（BaseMapper 自动拦截 + `@CachedQuery` 用户查询），写后自动失效；**binlog 直连失效兜底 state-kit CAS 直写/手工改库等绕过 MP 的写**（真机已验证） |
 | data-scope | 行级权限：SUPPORT 只看自己录入的反馈、DEV 只看指派给自己的任务（SQL 自动改写，fail-closed） |
 | OutboxPro | 批量导入事务内写 outbox，RabbitMQ 可靠投递触发 AI 整理消费者（RELIABLE + 重试 + DLQ） |
 | BOM | 版本管理基线（Central 大版本）；demo 因 JitPack groupId 不同直接锁 SHA，README 说明 |

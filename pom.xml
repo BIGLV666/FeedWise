@@ -116,6 +116,13 @@
             <artifactId>data-scope-spring-boot-starter</artifactId>
             <version>${jitpack.sha.data-scope}</version>
         </dependency>
+        <!-- cache-kit binlog 直连失效为 optional 依赖，启用需自加（0.31.0 兼容 MySQL 8.4） -->
+        <dependency>
+            <groupId>com.zendesk</groupId>
+            <artifactId>mysql-binlog-connector-java</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+
         <!-- OutboxPro 为多模块仓库，JitPack 坐标 group 带仓库名 -->
         <dependency>
             <groupId>com.github.BIGLV666.OutboxPro</groupId>

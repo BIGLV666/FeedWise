@@ -102,6 +102,17 @@ state-kit:
         - { from: DRAFT, event: CONFIRM, to: CONFIRMED }
         - { from: CONFIRMED, event: CONVERT, to: CONVERTED }
 
+# ── cache-kit binlog 直连失效：兜底一切"绕过 MyBatis-Plus 的写"——
+#    包括 state-kit 状态机 CAS 直写、DBA 手工改库，COMMIT 后自动失效对应实体缓存 ──
+cache-kit:
+  binlog:
+    enabled: true
+    host: ${DB_HOST:localhost}
+    port: ${DB_PORT:3308}
+    database: ${DB_NAME:feedwise}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+
 # ── OutboxPro：批量导入事务事件 → RabbitMQ → AI 整理消费者 ──
 outboxpro:
   enabled: true

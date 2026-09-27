@@ -42,7 +42,24 @@
 | 任务时间线 | TASK_CREATED（王产品）+ TASK_STATE_CHANGED（张工）+ 状态机流转历史三源合并，倒序 |
 | 幂等/限流/错误码端点 | /web-common/error-codes 正常返回字典 |
 
-## 四、已知边界
+## 四、binlog 失效兜底验证（2026-09-27 补充）
+
+针对"state-kit CAS 直写 DB 绕过 MyBatis-Plus → cache-kit 缓存可能脏读"的组合缺口，按组件既定方案启用 **binlog 直连失效**（`cache-kit.binlog.enabled=true` + `com.zendesk:mysql-binlog-connector-java:0.31.0`，MySQL 8.4 默认 log_bin=ROW/FULL 开箱即用）。
+
+真机实验（写库绕过应用，观察角色权限是否即时生效）：
+
+| 步骤 | 响应 |
+|---|---|
+| ① PM 调 PM 接口（预热缓存） | 业务错 40903（角色校验通过） |
+| ② `UPDATE fw_user SET role='DEV' WHERE id=3`（绕过应用）→ 立即再调 | **40300 缺少角色：PM**（binlog 失效生效） |
+| ③ 改回 role='PM' → 再调 | 业务错 40903（恢复） |
+
+结论：状态机 CAS 直写、DBA 改库等一切绕过 MP 的写，COMMIT 后由 binlog 自动失效对应实体缓存。
+测试环境（H2 无 binlog）保持 `cache-kit.binlog.enabled=false`，并以"状态机实体的读走条件查询（不缓存）"兜底——双保险。
+
+**组件反馈**：cache-kit 在 `binlog.enabled=true` 但 connector 类缺失时静默跳过（无任何 WARN）。建议启动期 fail-fast 或至少告警，避免"以为开了 binlog 失效其实没开"的静默失效——本次实验正是靠行为差异才发现依赖缺失。
+
+## 五、已知边界
 
 - 测试中 OutboxPro 关闭（无 RabbitMQ 依赖），其生产端行为由真机 e2e 验证；消费失败重试/DLQ 依赖组件自身 82 例测试。
 - api-governance 限流（登录 10 次/分、AI 触发 5 次/分）在真机验证可用，未写入自动化断言（组件自带 600+ 用例）。

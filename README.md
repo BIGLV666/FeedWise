@@ -53,7 +53,7 @@ AI 不产出任何"已生效"数据——候选卡与需求草稿都必须 PM �
 | **api-governance** | 登录/AI 接口限流、慢调用日志（500ms）、Micrometer 指标、429 统一提示 |
 | **concurrent-guard** | 批量导入/AI 触发/草稿转任务 `@Idempotent` 防重（40906）；转任务 `@DistributedLock` |
 | **state-kit** | task/issue/draft 三台状态机：CAS 唯一写入口 + 流转历史表 + 操作人自动接 auth-kit |
-| **cache-kit** | 三级缓存：`@CachedQuery` 用户查询 + BaseMapper 自动缓存与失效（状态机 CAS 路径刻意绕开缓存） |
+| **cache-kit** | 三级缓存：`@CachedQuery` 用户查询 + BaseMapper 自动缓存与失效；binlog 直连失效兜底状态机 CAS 直写/手工改库 |
 | **data-scope** | 行级权限：SUPPORT 只查自己录入的反馈、DEV 只看被指派的任务（SQL 自动改写，fail-closed） |
 | **OutboxPro** | 导入反馈事务内写 outbox → RabbitMQ → AI 整理消费者（RELIABLE + 重试 + DLQ） |
 

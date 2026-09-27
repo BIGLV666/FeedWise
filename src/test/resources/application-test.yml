@@ -9,6 +9,11 @@ spring:
 outboxpro:
   enabled: false
 
+# H2 没有 binlog，测试环境关闭 binlog 失效（生产/真机开启）
+cache-kit:
+  binlog:
+    enabled: false
+
 feedwise:
   ai:
     provider: mock
