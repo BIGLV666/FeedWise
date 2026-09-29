@@ -3,6 +3,9 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 *.log
+# 冒烟/调试临时文件（根目录）
+/*.json
+!package.json
 .env
 .idea/
 *.iml
