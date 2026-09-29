@@ -1,7 +1,10 @@
 package com.feedwise.controller;
 
+import com.feedwise.common.CurrentUser;
+import com.feedwise.common.error.FeedWiseErrorCode;
 import com.feedwise.entity.User;
 import com.feedwise.mapper.UserMapper;
+import io.github.biglv666.webcommon.exception.BusinessException;
 import io.github.biglv666.authkit.AuthKit;
 import io.github.biglv666.authkit.annotation.RequireRole;
 import io.github.biglv666.authkit.model.AuthSession;
@@ -52,10 +55,16 @@ public class SessionsController {
     /**
      * 强制下线（踢人）：指定用户的全部设备下线。
      *
-     * @param userId 用户 id
+     * <p>保护规则：不能踢自己（列表按最后活跃倒序，自己常在最上面，容易误点）——
+     * 自己的下线请走"退出登录"。被踢端收到 KICKED_OUT 专用语义，与会话被顶号（BE_REPLACED）区分。</p>
+     *
+     * @param userId 用户 id（不能是当前登录用户）
      */
     @DeleteMapping("/{userId}")
     public void kickoutUser(@PathVariable Long userId) {
+        if (userId.equals(CurrentUser.id())) {
+            throw new BusinessException(FeedWiseErrorCode.DATA_NOT_OWNED, "不能强制下线自己，请使用退出登录");
+        }
         AuthKit.kickout(userId, (String) null);
     }
 

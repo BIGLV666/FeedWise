@@ -26,7 +26,8 @@ request.interceptors.response.use(
       return body.data
     }
     if (body.code === 40100) {
-      ElMessage.warning('登录已失效，请重新登录')
+      // 展示后端语义文案：顶号（BE_REPLACED）/ 被踢（KICKED_OUT）/ 超时 各不相同
+      ElMessage.warning(body.message || '登录已失效，请重新登录')
       localStorage.removeItem('feedwise.token')
       localStorage.removeItem('feedwise.user')
       router.push('/login')

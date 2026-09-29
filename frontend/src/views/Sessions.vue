@@ -34,7 +34,9 @@
         </el-table-column>
         <el-table-column label="操作" width="110">
           <template #default="{ row }">
-            <el-button size="small" type="danger" plain @click="kickout(row)">强制下线</el-button>
+            <el-button v-if="row.userId !== auth.user.id" size="small" type="danger" plain
+              @click="kickout(row)">强制下线</el-button>
+            <el-tag v-else size="small" type="info" effect="plain">本机会话</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -46,6 +48,7 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../api/request'
+import { auth } from '../store/auth'
 import { ROLE_NAMES } from '../constants'
 
 const loading = ref(false)
