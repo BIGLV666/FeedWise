@@ -3,6 +3,7 @@ package com.feedwise.controller;
 import com.feedwise.ai.orchestrator.AiOrchestrator;
 import com.feedwise.common.CurrentUser;
 import com.feedwise.service.CandidateIssueService;
+import com.feedwise.service.FeedbackService;
 import com.feedwise.service.RequirementDraftService;
 import io.github.biglv666.apigovernance.async.annotation.AsyncAction;
 import io.github.biglv666.apigovernance.annotation.RateLimit;
@@ -33,12 +34,14 @@ public class AiController {
     private final AiOrchestrator aiOrchestrator;
     private final RequirementDraftService requirementDraftService;
     private final CandidateIssueService candidateIssueService;
+    private final FeedbackService feedbackService;
 
     public AiController(AiOrchestrator aiOrchestrator, RequirementDraftService requirementDraftService,
-                        CandidateIssueService candidateIssueService) {
+                        CandidateIssueService candidateIssueService, FeedbackService feedbackService) {
         this.aiOrchestrator = aiOrchestrator;
         this.requirementDraftService = requirementDraftService;
         this.candidateIssueService = candidateIssueService;
+        this.feedbackService = feedbackService;
     }
 
     /** AI 整理请求体。 */
@@ -78,6 +81,6 @@ public class AiController {
     }
 
     private String operatorName() {
-        return "用户#" + CurrentUser.id();
+        return feedbackService.displayName(CurrentUser.id());
     }
 }

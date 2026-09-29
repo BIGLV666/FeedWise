@@ -7,6 +7,8 @@
 > 每个组件都在业务里承担真实职责，不是"引了依赖"，而是"用了能力"。
 > 前端 Vue 3 + Vite + Element Plus（14 个页面），基础设施 MySQL 8.4 + Redis 7 + RabbitMQ 3（docker compose 一键起）。
 
+![工作台](docs/images/dashboard.png)
+
 ## 目录
 
 - [1. 这是什么 / 展示什么](#1-这是什么展示什么)
@@ -38,6 +40,8 @@
 | 死信台账与人工重放（模型不可用 → 直进死信 → 修复后重放） | 「死信管理」页（`/dlq`） |
 | 在线会话与踢人下线（顶号=BE_REPLACED / 被踢=KICKED_OUT 语义区分） | 「在线会话」页（`/sessions`） |
 | 测试揪出的真实缺陷与修复过程 | `docs/TEST-REPORT.md` |
+
+![全家桶能力地图](docs/images/capability.png)
 
 ## 2. 业务场景与角色
 
@@ -71,6 +75,8 @@ AI 为已确认问题生成需求草稿和验收条件（草稿未经确认不�
   └─ 全程时间线 = 操作日志（谁/何时/说明了什么）+ 状态机流转历史（双源合并查询）
 ```
 
+![候选问题详情：原文回查与全链路时间线](docs/images/issue-detail.png)
+
 ## 4. AI 的边界：受限工具调用
 
 这个项目里 AI **不是自由发挥的文本生成器**，而是一个只能调用白名单工具的受约束执行者：
@@ -98,6 +104,8 @@ AI 为已确认问题生成需求草稿和验收条件（草稿未经确认不�
 | 候选问题 | 待确认 → 确认 / 驳回 / 合并（唯一出边集合） | 已驳回→确认、已确认→驳回 |
 | 需求草稿 | DRAFT → CONFIRMED → CONVERTED | 草稿未确认直接转任务 |
 | 改进任务 | 待开发 → 开发中 → 待验证 → 已完成；待验证可退回开发中 | 待开发→已完成、已完成→任意 |
+
+![状态机可视化：yml 声明自动生成 Mermaid，边标注 guard/action](docs/images/machines.png)
 
 状态机扩展点也在用：`verifyResultGuard`（PASS/REJECT 验证结果必填，守卫在 CAS 前拦截）、
 `taskPassAction`（验证通过后同事务联动写回候选问题时间线）、`StateTransitedEvent`
@@ -160,6 +168,8 @@ BACKEND_PORT=8081 npm run dev            # http://localhost:5173（backend 端�
 
 反馈形态全覆盖：loading 骨架、空数据插画、成功/失败 Message、40900 冲突弹条、
 40906 重复提交提示、40300/40904 无权限提示、401 按语义展示（顶号/被踢/超时）。
+
+![任务详情：操作日志 + 状态机流转历史双源时间线](docs/images/task-timeline.png)
 
 ## 9. 测试与质量
 
