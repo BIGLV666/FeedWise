@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS fw_user (
     username     VARCHAR(50)  NOT NULL COMMENT '登录名',
     password     VARCHAR(100) NOT NULL COMMENT 'BCrypt 哈希',
     display_name VARCHAR(50)  NOT NULL COMMENT '姓名',
-    role         VARCHAR(20)  NOT NULL COMMENT 'SUPPORT/PM/DEV',
+    role         VARCHAR(20)  NOT NULL COMMENT 'SUPPORT/SUPPORT_LEAD/PM/DEV',
+    dept         VARCHAR(50)  NULL COMMENT '部门（data-scope 组维度归属）',
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_fw_user_username (username)
 ) ENGINE = InnoDB COMMENT '用户（auth-kit SPI 对接）';

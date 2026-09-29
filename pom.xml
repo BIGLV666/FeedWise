@@ -23,12 +23,12 @@
         <!-- 全家桶消费策略：JitPack 锁最新 commit（迭代），Maven Central 只发大版本。
              SHA 对应 2026-09-27 推送的各仓库 main 最新提交。 -->
         <jitpack.sha.auth-kit>3dab4767a9ec0a17b9a1cb90417a4762dd0cdd8f</jitpack.sha.auth-kit>
-        <jitpack.sha.api-governance>ed7634f5594863f9816b0cd11472bdb2dea69599</jitpack.sha.api-governance>
-        <jitpack.sha.guard>7085fdcf98495b7094f1b1fb4b81857c67d651b5</jitpack.sha.guard>
-        <jitpack.sha.web-common>b279da8ae51d02e638659daafe00e0f21962b929</jitpack.sha.web-common>
-        <jitpack.sha.state-kit>ffa09ac64783f0acb4904c88a788bcc2f0ff7473</jitpack.sha.state-kit>
-        <jitpack.sha.outboxpro>dca3e54c0d77a9e7b68bab3e3b4ecb1690901eb9</jitpack.sha.outboxpro>
-        <jitpack.sha.cache-kit>bdfa417238a690d17b8ef2bfca667806eff05a5f</jitpack.sha.cache-kit>
+        <jitpack.sha.api-governance>401bb6c2ca1181f1ca69612f71d8f3227e1a7344</jitpack.sha.api-governance>
+        <jitpack.sha.guard>e9942e36fbffb5e3912816959619e3e14656e80d</jitpack.sha.guard>
+        <jitpack.sha.web-common>7465cf62ca7432b4c160d5c53d77d41de1c48bb9</jitpack.sha.web-common>
+        <jitpack.sha.state-kit>53eaec6824cb15957321dbcaa2a56aaa49253321</jitpack.sha.state-kit>
+        <jitpack.sha.outboxpro>d7b42229111cd885728b974f87180ad9e44beb15</jitpack.sha.outboxpro>
+        <jitpack.sha.cache-kit>bd068856b9ea25c0057fa625db878d037e57dbd9</jitpack.sha.cache-kit>
         <jitpack.sha.data-scope>4c076c2e828cede7cb07e868a48f418eb1e1f301</jitpack.sha.data-scope>
     </properties>
 
@@ -115,6 +115,12 @@
             <groupId>com.github.BIGLV666</groupId>
             <artifactId>data-scope-spring-boot-starter</artifactId>
             <version>${jitpack.sha.data-scope}</version>
+        </dependency>
+        <!-- guard 分布式锁/编程式锁按类路径懒装配，Redisson 为 optional 需自加 -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.27.2</version>
         </dependency>
         <!-- cache-kit binlog 直连失效为 optional 依赖，启用需自加（0.31.0 兼容 MySQL 8.4） -->
         <dependency>

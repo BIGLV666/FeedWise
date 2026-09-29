@@ -2,11 +2,12 @@ SET NAMES utf8mb4;
 
 -- FeedWise 演示数据（密码统一 123456，BCrypt 哈希固定）
 
-INSERT INTO fw_user (id, username, password, display_name, role) VALUES
-(1, 'support1', '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '客服小王', 'SUPPORT'),
-(2, 'support2', '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '客服小李', 'SUPPORT'),
-(3, 'pm',       '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '王产品',   'PM'),
-(4, 'dev1',     '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '张工',     'DEV');
+INSERT INTO fw_user (id, username, password, display_name, role, dept) VALUES
+(1, 'support1', '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '客服小王', 'SUPPORT', '反馈组'),
+(2, 'support2', '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '客服小李', 'SUPPORT', '客诉组'),
+(3, 'pm',       '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '王产品',   'PM',       '产品部'),
+(4, 'dev1',     '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '张工',     'DEV',      '研发部'),
+(5, 'lead1',    '$2a$10$CjwQyqux17Z7LxEdSKZNaOMbvi4UEhvjJ2scY.4KTMgdu17EK5ONK', '客服主管赵姐', 'SUPPORT_LEAD', '反馈组');
 
 -- 种子反馈：覆盖"发票上传失败"多种说法、混合反馈、含义不同但关键词相似、其他模块
 INSERT INTO feedback (id, content, source, module, customer_tag, status, created_by) VALUES

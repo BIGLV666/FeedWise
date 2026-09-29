@@ -9,8 +9,10 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
     ports:
-      - "3308:3306"   # 宿主机 3308，避开本机原生 MySQL(3306)
+      - "3310:3306"   # 宿主机 3310，避开本机原生 MySQL(3306) 与残留代理
     volumes:
       - ./src/main/resources/Sql:/docker-entrypoint-initdb.d:ro
       - feedwise-mysql-data:/var/lib/mysql
@@ -24,7 +26,7 @@ services:
     image: redis:7-alpine
     container_name: feedwise-redis
     ports:
-      - "6380:6379"   # 宿主机 6380，避开 cache-kit-redis(6379)
+      - "6381:6379"   # 宿主机 6381，避开 cache-kit-redis(6379) 与残留代理
 
   rabbitmq:
     image: rabbitmq:3.13-management

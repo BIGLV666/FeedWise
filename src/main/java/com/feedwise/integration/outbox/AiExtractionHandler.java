@@ -4,6 +4,8 @@ import com.feedwise.ai.orchestrator.AiOrchestrator;
 import com.feedwise.config.OutboxConfig;
 import com.feedwise.ai.llm.AiUnavailableException;
 import com.feedwise.service.OperationLogService;
+import org.outboxpro.core.OutboxProPublisher;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.outboxpro.core.context.EventContext;
 import org.outboxpro.core.handler.OutboxProHandler;
 import org.slf4j.Logger;
@@ -17,16 +19,20 @@ import org.springframework.stereotype.Component;
  * 并重新抛出，由 OutboxPro 退避重试，耗尽后进入 DLQ 等待人工处理——反馈数据零丢失。</p>
  */
 @Component
+@ConditionalOnProperty(name = "outboxpro.enabled", havingValue = "true", matchIfMissing = true)
 public class AiExtractionHandler implements OutboxProHandler<FeedbackBatchImportedEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(AiExtractionHandler.class);
 
     private final AiOrchestrator aiOrchestrator;
     private final OperationLogService operationLogService;
+    private final OutboxProPublisher publisher;
 
-    public AiExtractionHandler(AiOrchestrator aiOrchestrator, OperationLogService operationLogService) {
+    public AiExtractionHandler(AiOrchestrator aiOrchestrator, OperationLogService operationLogService,
+                               OutboxProPublisher publisher) {
         this.aiOrchestrator = aiOrchestrator;
         this.operationLogService = operationLogService;
+        this.publisher = publisher;
     }
 
     @Override
@@ -51,6 +57,9 @@ public class AiExtractionHandler implements OutboxProHandler<FeedbackBatchImport
             int cards = aiOrchestrator.extractForFeedbacks(event.feedbackIds());
             operationLogService.log("AI_RUN", null, "AI_EXTRACT_DONE", null, aiOrchestrator.aiName(),
                     "批次 " + context.getEventId() + "：反馈 " + event.feedbackIds() + " → 生成候选卡片 " + cards + " 张");
+            // BEST_EFFORT 通知事件（注解式声明）：工作台动态；消费失败不影响本事件 ACK
+            publisher.publish(AiExtractionDoneEvent.class,
+                    new AiExtractionDoneEvent(context.getEventId(), cards, event.feedbackIds().size(), aiOrchestrator.aiName()));
             log.info("[ai-handler] 批次 {} 完成，生成 {} 张候选卡片", context.getEventId(), cards);
         } catch (AiUnavailableException e) {
             operationLogService.log("AI_RUN", null, "AI_RUN_FAILED", null, aiOrchestrator.aiName(),

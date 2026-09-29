@@ -21,8 +21,8 @@ export const auth = reactive({
   }
 })
 
-export async function login(username, password) {
-  const data = await request.post('/api/auth/login', { username, password })
+export async function login(username, password, rememberMe = false) {
+  const data = await request.post('/api/auth/login', { username, password, rememberMe })
   auth.token = data.token
   auth.user = data.user
   localStorage.setItem('feedwise.token', data.token)

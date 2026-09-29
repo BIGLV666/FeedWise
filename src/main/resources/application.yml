@@ -4,14 +4,14 @@ spring:
   config:
     import: optional:file:.env[.properties]
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3308}/${DB_NAME:feedwise}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3310}/${DB_NAME:feedwise}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6380}
+      port: ${REDIS_PORT:6381}
   rabbitmq:
     host: ${RABBIT_HOST:localhost}
     port: ${RABBIT_PORT:5672}
@@ -33,8 +33,13 @@ auth-kit:
     active-timeout: 1d
   session:
     max-sessions-per-device: 1
+  # 管理端点：在线会话查询/强制下线（PM 演示用，静态令牌保护）
+  management:
+    enabled: true
+    auth-token: ${AUTH_MGMT_TOKEN:feedwise-mgmt}
   whitelist:
     - /api/auth/login
+    - /api/internal/governance-alert
     - /web-common/error-codes
     - /api-governance/**
     - /actuator/**
@@ -53,20 +58,37 @@ api:
       message: 请求过于频繁，请稍后再试
     metrics:
       micrometer-enabled: true
+    management:
+      enabled: true
+      auth-token: ${GOV_MGMT_TOKEN:feedwise-gov}
+      base-path: /api-governance
+    alert:
+      enabled: true
+      suppress-interval-ms: 5000
+      webhook:
+        url: http://localhost:${SERVER_PORT:8080}/api/internal/governance-alert
+        auth-token: ${GOV_ALERT_TOKEN:feedwise-alert}
+        auth-header: X-Alert-Token
 
 # ── concurrent-guard：幂等 + 分布式锁 ──
 guard:
   enabled: true
+  idempotent:
+    # REPLAY 完成哨兵宽限：业务耗时略超占位 TTL 时重复请求仍可重放上次结果
+    replay-grace-millis: 5000
 
 # ── data-scope：行级数据权限（开启即强承诺，必须配 ScopeResolver）──
 data-scope:
   enabled: true
 
-# ── state-kit：三台状态机 + 流转历史 ──
+# ── state-kit：三台状态机 + 流转历史 + 冲突自动重试 ──
 state-kit:
   operator: auto
   history:
     enabled: true
+  retry:
+    max-attempts: 3
+    backoff-ms: 50
   machines:
     task:
       state-type: com.feedwise.enums.TaskStatus
@@ -78,8 +100,8 @@ state-kit:
       transitions:
         - { from: TODO, event: START, to: IN_PROGRESS }
         - { from: IN_PROGRESS, event: SUBMIT, to: PENDING_VERIFY }
-        - { from: PENDING_VERIFY, event: PASS, to: DONE }
-        - { from: PENDING_VERIFY, event: REJECT, to: IN_PROGRESS }
+        - { from: PENDING_VERIFY, event: PASS, to: DONE, guard: verifyResultGuard, action: taskPassAction }
+        - { from: PENDING_VERIFY, event: REJECT, to: IN_PROGRESS, guard: verifyResultGuard }
     issue:
       state-type: com.feedwise.enums.IssueStatus
       table: candidate_issue
@@ -107,8 +129,9 @@ state-kit:
 cache-kit:
   binlog:
     enabled: true
+    gtid-enabled: true
     host: ${DB_HOST:localhost}
-    port: ${DB_PORT:3308}
+    port: ${DB_PORT:3310}
     database: ${DB_NAME:feedwise}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
@@ -127,6 +150,13 @@ outboxpro:
     concurrency: 2
   ops:
     enabled: true
+  dlq:
+    ledger:
+      enabled: true
+      schema-initialize: true
+      max-replay-count: 3
+    replay:
+      enabled: true   # 配合 DlqReplayAuthorizer 按 scope 判权（仅 PM 可重放）
 
 feedwise:
   ai:

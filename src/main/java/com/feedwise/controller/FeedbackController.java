@@ -25,7 +25,7 @@ import java.util.Map;
 /** 反馈：录入 / 批量导入 / 查询。录入者归属即数据归属。 */
 @RestController
 @RequestMapping("/api/feedbacks")
-@RequireRole(value = {"SUPPORT", "PM", "DEV"}, mode = io.github.biglv666.authkit.model.AuthMode.ANY)
+@RequireRole(value = {"SUPPORT", "SUPPORT_LEAD", "PM", "DEV"}, mode = io.github.biglv666.authkit.model.AuthMode.ANY)
 public class FeedbackController {
 
     private final FeedbackService feedbackService;

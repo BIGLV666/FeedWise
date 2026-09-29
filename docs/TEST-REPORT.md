@@ -5,9 +5,10 @@
 ## 一、单元 + 集成测试（mvn test）
 
 ```
-[INFO] Tests run: 29, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
+（第二轮扩展后：29 原有 + ExpandedCapabilityTest 6 例新增）
 
 | 测试类 | 用例 | 覆盖 |
 |---|---|---|
@@ -17,6 +18,7 @@
 | StateMachineAndScopeTest | 6 | TODO→PASS 禁跳 40900 / REJECT 退回 IN_PROGRESS + verify_result 落库 / DONE 终态再流转 40900 / 未确认草稿转任务拒绝 / DEV 只看指派给自己的任务 / DEV 读他人任务 40904 |
 | IdempotentConflictTest | 1 | 30s TTL 内重复导入 → guard REJECT → 40906（无 Redis 环境自动跳过：guard fail-open） |
 | CacheKitSmokeTest | 1 | @CachedQuery 二次查询命中缓存（DB 计数不变）/ 直写 DB 后缓存旧值 / updateById 失效后读到新值（无 Redis 环境自动跳过） |
+| ExpandedCapabilityTest | 6 | REPLAY 重复转任务重放同一 taskId（200 而非 409）/ availableActions 可操作视图 / StateGuard 验证结果必填（40003，状态不变）/ 未二级认证合并 40300 → openSafe 后放行 / SUPPORT_LEAD deptIn 只见本组反馈 / CSV 导出权限位（PM+主管可、普通客服 40300、主管范围收敛） |
 
 ## 二、测试过程中发现并修复的真实缺陷
 

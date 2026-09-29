@@ -4,6 +4,7 @@ import com.feedwise.ai.orchestrator.AiOrchestrator;
 import com.feedwise.common.CurrentUser;
 import com.feedwise.service.CandidateIssueService;
 import com.feedwise.service.RequirementDraftService;
+import io.github.biglv666.apigovernance.async.annotation.AsyncAction;
 import io.github.biglv666.apigovernance.annotation.RateLimit;
 import io.github.biglv666.authkit.annotation.RequireRole;
 import io.github.biglv666.guard.idempotent.Idempotent;
@@ -55,6 +56,7 @@ public class AiController {
      * @return cardsCreated 成功创建的候选卡片数
      */
     @PostMapping("/extract")
+    @AsyncAction("feedwise.ai.extract")
     @RateLimit(limit = 5, window = 60)
     @Idempotent(key = "'ai-extract:' + #request.feedbackIds", ttl = 60, message = "AI 整理正在进行或刚完成，请刷新查看候选问题")
     public Map<String, Object> extract(@Valid @RequestBody ExtractRequest request) {

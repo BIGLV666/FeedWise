@@ -7,7 +7,9 @@ import com.feedwise.service.CandidateIssueService;
 import com.feedwise.service.FeedbackService;
 import com.feedwise.service.OperationLogService;
 import com.feedwise.service.RequirementDraftService;
+import io.github.biglv666.authkit.annotation.RequirePermission;
 import io.github.biglv666.authkit.annotation.RequireRole;
+import io.github.biglv666.authkit.annotation.RequireSafe;
 import io.github.biglv666.webcommon.result.Result;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -90,9 +92,9 @@ public class IssueController {
                 "timeline", operationLogService.timeline("ISSUE", id));
     }
 
-    /** PM 确认候选问题。 */
+    /** PM 确认候选问题（权限位模型演示：issue:confirm）。 */
     @PostMapping("/{id}/confirm")
-    @RequireRole("PM")
+    @RequirePermission("issue:confirm")
     public void confirm(@PathVariable Long id, @RequestBody NoteRequest request) {
         candidateIssueService.confirm(id, CurrentUser.id(), operatorName(), request.note());
     }
@@ -104,9 +106,12 @@ public class IssueController {
         candidateIssueService.reject(id, CurrentUser.id(), operatorName(), request.note());
     }
 
-    /** PM 合并候选问题到目标卡片。 */
+    /**
+     * PM 合并候选问题到目标卡片（敏感操作：@RequireSafe 二级认证 + issue:merge 权限位 + LockTemplate 编程式锁）。
+     */
     @PostMapping("/{id}/merge")
-    @RequireRole("PM")
+    @RequireSafe
+    @RequirePermission("issue:merge")
     public void merge(@PathVariable Long id, @Valid @RequestBody MergeRequest request) {
         candidateIssueService.merge(id, request.targetId(), CurrentUser.id(), operatorName(), request.note());
     }

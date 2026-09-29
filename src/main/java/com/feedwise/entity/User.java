@@ -22,8 +22,11 @@ public class User {
 
     private String displayName;
 
-    /** SUPPORT / PM / DEV */
+    /** SUPPORT / SUPPORT_LEAD / PM / DEV */
     private String role;
+
+    /** 部门（data-scope 组维度归属列） */
+    private String dept;
 
     private LocalDateTime createdAt;
 }

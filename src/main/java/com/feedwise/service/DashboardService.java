@@ -2,9 +2,12 @@ package com.feedwise.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.feedwise.entity.DashboardSnapshot;
 import com.feedwise.mapper.CandidateIssueMapper;
 import com.feedwise.mapper.FeedbackMapper;
 import com.feedwise.mapper.ImprovementTaskMapper;
+import io.github.biglv666.cachekit.annotation.CacheHandle;
+import io.github.biglv666.cachekit.core.EntityCache;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -26,9 +29,21 @@ public class DashboardService {
         this.taskMapper = taskMapper;
     }
 
+    /**
+     * 工作台统计（@CacheHandle 手动句柄演示：30 秒 TTL 内统计零重复计算，
+     * 与 @CachedQuery 注解式缓存对照；新数据最多 30 秒延迟，工作台场景可接受）。
+     */
+    @CacheHandle(DashboardSnapshot.class)
+    private EntityCache<DashboardSnapshot> snapshotCache;
+
     /** @return 工作台统计快照（反馈状态/模块分布、候选问题与任务状态分布） */
-    public Snapshot snapshot() {
-        return new Snapshot(
+    public DashboardSnapshot snapshot() {
+        DashboardSnapshot cached = snapshotCache.get("global", this::computeSnapshot);
+        return cached != null ? cached : computeSnapshot();
+    }
+
+    private DashboardSnapshot computeSnapshot() {
+        return new DashboardSnapshot("global",
                 countBy(feedbackMapper, "status"),
                 countBy(feedbackMapper, "module"),
                 countBy(issueMapper, "status"),
@@ -50,10 +65,5 @@ public class DashboardService {
                     count instanceof Number n ? n.longValue() : Long.parseLong(String.valueOf(count)));
         }
         return result;
-    }
-
-    /** 统计快照。 */
-    public record Snapshot(Map<String, Long> feedbackByStatus, Map<String, Long> feedbackByModule,
-                           Map<String, Long> issueByStatus, Map<String, Long> taskByStatus) {
     }
 }

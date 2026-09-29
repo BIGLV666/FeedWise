@@ -10,6 +10,8 @@ import com.feedwise.mapper.CandidateIssueMapper;
 import com.feedwise.mapper.FeedbackMapper;
 import com.feedwise.enums.IssueStatus;
 import com.feedwise.mapper.IssueFeedbackLinkMapper;
+import io.github.biglv666.cachekit.core.CacheKit;
+import io.github.biglv666.guard.lock.LockTemplate;
 import io.github.biglv666.statekit.FireArg;
 import io.github.biglv666.statekit.StateMachine;
 import io.github.biglv666.webcommon.exception.BusinessException;
@@ -33,17 +35,21 @@ public class CandidateIssueService {
     private final OperationLogService operationLogService;
     private final FeedbackService feedbackService;
     private final StateMachine<IssueStatus, Long> issueMachine;
+    /** 编程式分布式锁：合并候选问题用（与 @DistributedLock 注解式对照展示） */
+    private final LockTemplate lockTemplate;
 
     public CandidateIssueService(CandidateIssueMapper issueMapper, FeedbackMapper feedbackMapper,
                                  IssueFeedbackLinkMapper linkMapper, OperationLogService operationLogService,
                                  FeedbackService feedbackService,
-                                 @Qualifier("issue") StateMachine<IssueStatus, Long> issueMachine) {
+                                 @Qualifier("issue") StateMachine<IssueStatus, Long> issueMachine,
+                                 LockTemplate lockTemplate) {
         this.issueMapper = issueMapper;
         this.feedbackMapper = feedbackMapper;
         this.linkMapper = linkMapper;
         this.operationLogService = operationLogService;
         this.feedbackService = feedbackService;
         this.issueMachine = issueMachine;
+        this.lockTemplate = lockTemplate;
     }
 
     /**
@@ -150,8 +156,13 @@ public class CandidateIssueService {
      * @param targetId 目标卡片（必须 CONFIRMED）
      */
     public void merge(Long sourceId, Long targetId, Long operatorId, String operatorName, String note) {
-        CandidateIssue target = issueMapper.selectOne(new LambdaQueryWrapper<CandidateIssue>()
-                .eq(CandidateIssue::getId, targetId));
+        // 编程式分布式锁：同一源卡片的合并互斥（注解式 @DistributedLock 的对应写法）
+        lockTemplate.withLock("issue-merge:" + sourceId, () -> doMerge(sourceId, targetId, operatorId, operatorName, note));
+    }
+
+    private void doMerge(Long sourceId, Long targetId, Long operatorId, String operatorName, String note) {
+        // withDb 强一致读：合并决策不能被缓存旧状态误导（cache-kit 旁路演示）
+        CandidateIssue target = CacheKit.withDb(() -> issueMapper.selectById(targetId));
         if (target == null || target.getMergedIntoId() != null) {
             throw new BusinessException(FeedWiseErrorCode.MERGE_TARGET_INVALID);
         }

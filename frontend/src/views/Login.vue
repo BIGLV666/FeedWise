@@ -13,12 +13,15 @@
         <el-form-item>
           <el-input v-model="password" size="large" type="password" placeholder="密码" show-password @keyup.enter="doLogin" />
         </el-form-item>
+        <el-form-item style="margin-bottom: 14px">
+          <el-checkbox v-model="rememberMe">7 天免登录（auth-kit 记住我）</el-checkbox>
+        </el-form-item>
         <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="doLogin">登 录</el-button>
       </el-form>
       <el-divider><span class="divider-text">演示账号（密码 123456）</span></el-divider>
       <div class="demo-accounts">
         <button v-for="acc in accounts" :key="acc.u" class="acc-chip" type="button" @click="fill(acc.u)">
-          <span class="acc-role" :data-role="acc.u.startsWith('support') ? 'S' : acc.u === 'pm' ? 'P' : 'D'"></span>
+          <span class="acc-role" :data-role="acc.u.startsWith('support') ? 'S' : acc.u.startsWith('lead') ? 'L' : acc.u === 'pm' ? 'P' : 'D'"></span>
           {{ acc.label }}<span class="acc-id">{{ acc.u }}</span>
         </button>
       </div>
@@ -37,10 +40,12 @@ const router = useRouter()
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
+const rememberMe = ref(false)
 
 const accounts = [
   { u: 'support1', label: '客服小王' },
   { u: 'support2', label: '客服小李' },
+  { u: 'lead1', label: '客服主管' },
   { u: 'pm', label: '产品经理' },
   { u: 'dev1', label: '开发张工' }
 ]
@@ -57,7 +62,7 @@ async function doLogin() {
   }
   loading.value = true
   try {
-    const user = await login(username.value, password.value)
+    const user = await login(username.value, password.value, rememberMe.value)
     ElMessage.success(`欢迎，${user.displayName}`)
     router.push('/dashboard')
   } catch (ignored) {
@@ -101,6 +106,7 @@ async function doLogin() {
 .acc-id { margin-left: auto; color: #b0b9c9; font-size: 11px; }
 .acc-role { width: 8px; height: 8px; border-radius: 50%; }
 .acc-role[data-role="S"] { background: #34c38f; }
+.acc-role[data-role="L"] { background: #13c2c2; }
 .acc-role[data-role="P"] { background: #f5a623; }
 .acc-role[data-role="D"] { background: #2f6bff; }
 .login-foot { color: rgba(255, 255, 255, .55); font-size: 12px; margin-top: 22px; }

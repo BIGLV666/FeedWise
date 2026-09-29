@@ -27,6 +27,18 @@
         <el-menu-item index="/history">
           <el-icon><Clock /></el-icon><span>操作历史</span>
         </el-menu-item>
+        <el-menu-item index="/capability">
+          <el-icon><Grid /></el-icon><span>能力地图</span>
+        </el-menu-item>
+        <el-menu-item index="/machines">
+          <el-icon><Share /></el-icon><span>状态机</span>
+        </el-menu-item>
+        <el-menu-item index="/dlq">
+          <el-icon><Delete /></el-icon><span>死信管理</span>
+        </el-menu-item>
+        <el-menu-item index="/sessions">
+          <el-icon><Monitor /></el-icon><span>在线会话</span>
+        </el-menu-item>
       </el-menu>
       <div class="aside-footer">biglv666 全家桶演示</div>
     </el-aside>
@@ -49,7 +61,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataBoard, ChatLineSquare, Collection, Document, List, Clock } from '@element-plus/icons-vue'
+import { DataBoard, ChatLineSquare, Collection, Document, List, Clock, Grid, Share, Delete, Monitor } from '@element-plus/icons-vue'
 import { auth, logout } from './store/auth'
 import { ROLE_NAMES } from './constants'
 

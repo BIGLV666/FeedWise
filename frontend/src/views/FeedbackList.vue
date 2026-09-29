@@ -15,6 +15,7 @@
         <el-button v-if="auth.isSupport || auth.isPM" @click="createVisible = true">录入反馈</el-button>
         <el-button v-if="auth.isSupport || auth.isPM" type="success" @click="importVisible = true">批量导入</el-button>
         <el-button v-if="auth.isPM" type="warning" :loading="aiLoading" @click="runAi">AI 整理未处理反馈</el-button>
+        <el-button v-if="auth.isPM || auth.role === 'SUPPORT_LEAD'" @click="exportCsv">导出 CSV</el-button>
       </div>
       <el-table v-loading="loading" :data="records" stripe>
         <el-table-column prop="id" label="ID" width="60" />
@@ -154,6 +155,24 @@ async function doImport() {
   } finally {
     saving.value = false
   }
+}
+
+async function exportCsv() {
+  // @NoWrap 文件下载：直接打开后端流式响应（axios responseType=blob）
+  const token = localStorage.getItem('feedwise.token')
+  const res = await fetch('/api/feedbacks/export', { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    ElMessage.error('导出失败（无权限或服务异常）')
+    return
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'feedback-export.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('CSV 已导出（范围与列表一致）')
 }
 
 async function runAi() {

@@ -33,18 +33,17 @@ public abstract class TestBase {
     private StringRedisTemplate stringRedisTemplate;
 
     /**
-     * 每个测试类启动前清理 guard 幂等键，避免上一次运行的 TTL 键跨运行污染（无 Redis 时静默跳过）。
+     * 每个测试方法前清理 guard 幂等键，避免上一次运行的 TTL 键跨运行污染（无 Redis 时静默跳过）。
      */
-    @org.junit.jupiter.api.BeforeAll
-    static void cleanupGuardKeys(@org.springframework.beans.factory.annotation.Autowired org.springframework.context.ApplicationContext ctx) {
+    @org.junit.jupiter.api.BeforeEach
+    void cleanupGuardKeys() {
         try {
-            StringRedisTemplate template = ctx.getBeanProvider(StringRedisTemplate.class).getIfAvailable();
-            if (template == null) {
+            if (stringRedisTemplate == null) {
                 return;
             }
-            var keys = template.keys("guard:idempotent:*");
+            var keys = stringRedisTemplate.keys("guard:idempotent:*");
             if (keys != null && !keys.isEmpty()) {
-                template.delete(keys);
+                stringRedisTemplate.delete(keys);
             }
         } catch (Exception ignored) {
             // 无 Redis 环境（幂等 fail-open）直接跳过

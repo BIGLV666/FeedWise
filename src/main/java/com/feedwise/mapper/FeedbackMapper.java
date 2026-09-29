@@ -22,6 +22,6 @@ public interface FeedbackMapper extends BaseMapper<Feedback> {
      * @return 过滤后的反馈分页
      */
     @Select("SELECT * FROM feedback ${ew.customSqlSegment}")
-    @DataScope(selfColumn = "created_by")
+    @DataScope(selfColumn = "created_by", deptColumn = "created_by")
     Page<Feedback> selectScoped(Page<Feedback> page, @Param(Constants.WRAPPER) Wrapper<Feedback> wrapper);
 }

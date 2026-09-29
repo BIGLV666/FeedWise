@@ -11,6 +11,7 @@ import com.feedwise.mapper.CandidateIssueMapper;
 import com.feedwise.mapper.RequirementDraftMapper;
 import io.github.biglv666.guard.lock.DistributedLock;
 import io.github.biglv666.guard.idempotent.Idempotent;
+import io.github.biglv666.guard.idempotent.IdempotentMode;
 import io.github.biglv666.statekit.FireArg;
 import io.github.biglv666.statekit.StateMachine;
 import io.github.biglv666.webcommon.exception.BusinessException;
@@ -145,7 +146,9 @@ public class RequirementDraftService {
      * @param operatorName PM 展示名
      * @return 新任务 id
      */
-    @Idempotent(key = "'draft-convert:' + #draftId", ttl = 30, message = "该草稿正在转换或已转换过，请刷新查看任务列表")
+    // REPLAY 模式：重复"转任务"不再 40906 拒绝，而是直接重放上次结果（返回原 taskId）——
+    // 与导入/AI 触发的 REJECT 模式对照展示两种幂等语义；完成哨兵宽限由 guard.idempotent.replay-grace-millis 控制
+    @Idempotent(key = "'draft-convert:' + #draftId", ttl = 30, mode = IdempotentMode.REPLAY)
     @DistributedLock(key = "'draft-convert:' + #draftId", waitTime = 3)
     @Transactional
     public Long convertToTask(Long draftId, Long assigneeId, String priority, String detail,

@@ -10,7 +10,7 @@
           <template v-if="auth.isPM && detail && detail.issue && detail.issue.status === 'PENDING_REVIEW'">
             <el-button type="success" @click="confirmIssue">确认成立</el-button>
             <el-button type="danger" plain @click="rejectVisible = true">驳回</el-button>
-            <el-button type="warning" plain @click="mergeVisible = true">合并到其他卡</el-button>
+            <el-button type="warning" plain @click="openMergeDialog">合并到其他卡</el-button>
           </template>
           <el-button v-if="auth.isPM && detail && detail.issue && detail.issue.status === 'CONFIRMED' && detail.activeDraftId < 0"
             type="primary" :loading="draftLoading" @click="aiDraft">AI 起草需求</el-button>
@@ -58,14 +58,18 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="mergeVisible" title="合并候选问题" width="440">
+    <el-dialog v-model="mergeVisible" title="合并候选问题（敏感操作，需二级认证）" width="440">
       <el-form label-width="90">
         <el-form-item label="目标卡片ID"><el-input v-model="mergeTarget" placeholder="已确认或待确认的目标卡片 id" /></el-form-item>
         <el-form-item label="合并说明"><el-input v-model="note" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item v-if="!safeState" label="登录密码">
+          <el-input v-model="safePassword" type="password" show-password placeholder="二级认证：@RequireSafe" />
+        </el-form-item>
+        <el-alert v-else type="success" :closable="false" title="已通过二级认证，可直接合并" />
       </el-form>
       <template #footer>
         <el-button @click="mergeVisible = false">取消</el-button>
-        <el-button type="warning" @click="mergeIssue">合并</el-button>
+        <el-button type="warning" :loading="merging" @click="mergeIssue">合并</el-button>
       </template>
     </el-dialog>
   </div>
@@ -89,6 +93,9 @@ const note = ref('')
 const rejectVisible = ref(false)
 const mergeVisible = ref(false)
 const mergeTarget = ref('')
+const safeState = ref(false)
+const safePassword = ref('')
+const merging = ref(false)
 const draftLoading = ref(false)
 
 onMounted(load)
@@ -116,15 +123,39 @@ async function rejectIssue() {
   load()
 }
 
+async function openMergeDialog() {
+  // @RequireSafe：先查二级认证状态，未认证需输入密码 openSafe
+  safeState.value = await request.get('/api/auth/safe')
+  mergeVisible.value = true
+}
+
 async function mergeIssue() {
   if (!mergeTarget.value) {
     ElMessage.warning('请输入目标卡片 id')
     return
   }
-  await request.post(`/api/issues/${id.value}/merge`, { targetId: Number(mergeTarget.value), note: note.value })
-  ElMessage.success('已合并')
-  mergeVisible.value = false
-  load()
+  merging.value = true
+  try {
+    if (!safeState.value) {
+      if (!safePassword.value) {
+        ElMessage.warning('合并是敏感操作，请输入登录密码完成二级认证')
+        return
+      }
+      await request.post('/api/auth/safe', { username: auth.user.username || currentUsername(), password: safePassword.value })
+      ElMessage.success('二级认证通过')
+    }
+    await request.post(`/api/issues/${id.value}/merge`, { targetId: Number(mergeTarget.value), note: note.value })
+    ElMessage.success('已合并')
+    mergeVisible.value = false
+    load()
+  } catch (ignored) {
+  } finally {
+    merging.value = false
+  }
+}
+
+function currentUsername() {
+  return (auth.user && auth.user.username) || 'pm'
 }
 
 async function aiDraft() {

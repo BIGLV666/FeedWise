@@ -1,5 +1,6 @@
 package com.feedwise.controller;
 
+import com.feedwise.entity.DashboardSnapshot;
 import com.feedwise.service.DashboardService;
 import io.github.biglv666.authkit.annotation.RequireLogin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +19,9 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
-    /** @return 统计快照 */
+    /** @return 统计快照（cache-kit @CacheHandle 缓存 30 秒） */
     @GetMapping
-    public DashboardService.Snapshot snapshot() {
+    public DashboardSnapshot snapshot() {
         return dashboardService.snapshot();
     }
 }

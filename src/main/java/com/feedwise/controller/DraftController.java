@@ -8,6 +8,7 @@ import com.feedwise.service.FeedbackService;
 import com.feedwise.service.ImprovementTaskService;
 import com.feedwise.service.OperationLogService;
 import com.feedwise.service.RequirementDraftService;
+import io.github.biglv666.authkit.annotation.RequirePermission;
 import io.github.biglv666.authkit.annotation.RequireRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -108,7 +109,7 @@ public class DraftController {
      * @return 新任务 id
      */
     @PostMapping("/{id}/convert")
-    @RequireRole("PM")
+    @RequirePermission("draft:convert")
     public Long convert(@PathVariable Long id, @Valid @RequestBody ConvertRequest request) {
         return requirementDraftService.convertToTask(id, request.assigneeId(), request.priority(),
                 request.detail(), CurrentUser.id(), feedbackService.displayName(CurrentUser.id()));

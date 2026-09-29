@@ -86,27 +86,14 @@ public class ImprovementTaskService {
             throw new BusinessException(FeedWiseErrorCode.TASK_EVENT_INVALID);
         }
         ImprovementTask task = requireExists(taskId);
-        TaskStatus from = TaskStatus.valueOf(task.getStatus());
         List<FireArg> args = new java.util.ArrayList<>();
         if ("PASS".equals(event) || "REJECT".equals(event)) {
-            if (note == null || note.isBlank()) {
-                throw new BusinessException(FeedWiseErrorCode.VERIFY_RESULT_REQUIRED);
-            }
+            // 必填校验已挪到 state-kit 守卫（verifyResultGuard）；note 同时落 verify_result 列与守卫上下文
             args.add(FireArg.set("verify_result", note));
+            args.add(FireArg.param("verifyResult", note));
         }
+        // 时间线由 StateTransitedListener（AFTER_COMMIT）统一记录，本方法不再手写
         taskMachine.fire(taskId, event, args.toArray(FireArg[]::new));
-        operationLogService.log("TASK", taskId, "TASK_STATE_CHANGED", operatorId, operatorName,
-                event + "：" + from + " → " + targetOf(event) + (note == null || note.isBlank() ? "" : "；验证/处理说明：" + note));
-    }
-
-    private String targetOf(String event) {
-        return switch (event) {
-            case "START" -> "IN_PROGRESS";
-            case "SUBMIT" -> "PENDING_VERIFY";
-            case "PASS" -> "DONE";
-            case "REJECT" -> "IN_PROGRESS";
-            default -> "?";
-        };
     }
 
     /**

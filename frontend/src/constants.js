@@ -1,5 +1,5 @@
 // 状态/模块/来源的中文展示字典（与后端枚举一一对应）
-export const ROLE_NAMES = { SUPPORT: '客服', PM: '产品经理', DEV: '开发/测试' }
+export const ROLE_NAMES = { SUPPORT: '客服', SUPPORT_LEAD: '客服主管', PM: '产品经理', DEV: '开发/测试' }
 
 export const FEEDBACK_STATUS = { UNPROCESSED: '未处理', PROCESSED: '已归档' }
 export const ISSUE_STATUS = { PENDING_REVIEW: '待产品经理确认', CONFIRMED: '已确认', REJECTED: '已驳回', MERGED: '已合并' }

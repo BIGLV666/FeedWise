@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS fw_user (
     password VARCHAR(100) NOT NULL,
     display_name VARCHAR(50) NOT NULL,
     role VARCHAR(20) NOT NULL,
+    dept VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_fw_user_username UNIQUE (username)
 );

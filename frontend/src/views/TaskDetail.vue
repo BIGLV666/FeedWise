@@ -66,16 +66,22 @@ const currentEvent = ref(null)
 
 onMounted(load)
 
-// 只展示当前状态允许的事件，禁跳由后端状态机兜底
+// 可操作事件由状态机 availableActions 返回（0.3.0 可操作视图），前端不写死；
+// 展示名仍按事件名映射中文
+const machineActions = ref([])
 const allowedEvents = computed(() => {
-  if (!detail.value || !detail.value.task) return []
-  return TASK_EVENTS.filter((ev) => ev.from === detail.value.task.status)
+  const events = machineActions.value.length
+      ? machineActions.value.map((a) => a.event)
+      : (detail.value && detail.value.task ? TASK_EVENTS.filter((ev) => ev.from === detail.value.task.status).map((ev) => ev.event) : [])
+  return TASK_EVENTS.filter((ev) => events.includes(ev.event))
 })
 
 async function load() {
   loading.value = true
   try {
     detail.value = await request.get(`/api/tasks/${id.value}`)
+    // availableActions：终态返回空列表（按钮全部隐藏）
+    machineActions.value = await request.get(`/api/machines/task/${id.value}/actions`)
   } catch (ignored) {
   } finally {
     loading.value = false

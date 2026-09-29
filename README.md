@@ -14,6 +14,7 @@
 | 角色 | 账号 | 能做 | 不能做 |
 |---|---|---|---|
 | 客服 SUPPORT | support1 / support2（密码 123456） | 录入/批量导入脱敏反馈、查看自己录入的反馈 | 确认问题、定优先级、建任务（→40300） |
+| 客服主管 SUPPORT_LEAD | lead1（密码 123456） | 查看本组（同 dept）客服的反馈、导出 CSV、手工建卡 | 确认问题、定优先级、建任务（→40300） |
 | 产品经理 PM | pm（密码 123456） | 触发 AI、确认/合并/驳回、改草稿、建任务、定优先级 | 修改/删除任何反馈原文（接口不存在） |
 | 开发/测试 DEV | dev1（密码 123456） | 任务状态流转、记录验证结果 | 需求确认、建任务（→40300） |
 
@@ -48,14 +49,14 @@ AI 不产出任何"已生效"数据——候选卡与需求草稿都必须 PM �
 
 | 组件 | 在本项目中的用途 |
 |---|---|
-| **auth-kit** | 三角色会话登录（不透明 token + Redis）、同端顶号、`@RequireRole` 拦截、登录防爆破 |
-| **web-common** | 统一 Result + 全局异常 + 错误码分段；`/web-common/error-codes` 错误码字典端点 |
-| **api-governance** | 登录/AI 接口限流、慢调用日志（500ms）、Micrometer 指标、429 统一提示 |
-| **concurrent-guard** | 批量导入/AI 触发/草稿转任务 `@Idempotent` 防重（40906）；转任务 `@DistributedLock` |
-| **state-kit** | task/issue/draft 三台状态机：CAS 唯一写入口 + 流转历史表 + 操作人自动接 auth-kit |
-| **cache-kit** | 三级缓存：`@CachedQuery` 用户查询 + BaseMapper 自动缓存与失效；binlog 直连失效兜底状态机 CAS 直写/手工改库 |
-| **data-scope** | 行级权限：SUPPORT 只查自己录入的反馈、DEV 只看被指派的任务（SQL 自动改写，fail-closed） |
-| **OutboxPro** | 导入反馈事务内写 outbox → RabbitMQ → AI 整理消费者（RELIABLE + 重试 + DLQ） |
+| **auth-kit** | 四角色会话登录（不透明 token + Redis）、`@RequireRole`+`@RequirePermission` 两级模型、`@RequireSafe` 二级认证（合并敏感操作）、记住我、同端顶号、在线会话与强制下线 |
+| **web-common** | 统一 Result + 全局异常 + 错误码分段；错误码字典端点；`@NoWrap` CSV 导出；`@DefaultErrorCode` 异常映射 |
+| **api-governance** | 限流（0.6.0 标准响应头）、慢调用日志、`@AsyncAction/@AsyncHandler` 异步钩子（AI 整理四阶段观察）、告警 webhook+恢复通知→时间线、管理端点、`@NoLog` |
+| **concurrent-guard** | `@Idempotent` 双模式：REJECT（导入/AI，40906）+ REPLAY（转任务，重放上次 taskId）+ 完成哨兵宽限；`@DistributedLock` 与 `LockTemplate` 编程式锁；`GuardRejectedEvent` 留痕 |
+| **state-kit** | 三台状态机：CAS 唯一写入口、流转历史、`StateGuard`（验证结果必填）/`StateAction`（PASS 联动）、`StateTransitedEvent` 时间线、`availableActions` 可操作按钮、Mermaid 可视化导出、冲突自动重试 |
+| **cache-kit** | 三级缓存：MP 自动缓存、`@CachedQuery`、`@CacheEntity`+`@CacheHandle`（工作台快照 30s）；binlog 直连失效（GTID 位点）兜底绕过 MP 的写；`withDb` 强一致读 |
+| **data-scope** | 行级权限：SUPPORT→self、**SUPPORT_LEAD→deptIn 本组**、DEV→被指派任务、PM→all（SQL 自动改写，fail-closed） |
+| **OutboxPro** | 导入事务 outbox→RabbitMQ→AI 消费者（RELIABLE）；`@OutboxEvent/@OutboxHandler` 注解式 BEST_EFFORT 通知；`@NonRetryable` 直进死信；死信台账+人工重放（权限位判权） |
 
 依赖消费策略：`pom.xml` 经 JitPack（`com.github.BIGLV666:...:<commit-sha>`）锁定各组件**最新 main 提交**；
 组件日常迭代走 JitPack，Maven Central 只发大版本（大版本走 BOM `io.github.biglv666:biglv666-spring-boot-bom`）。
@@ -67,7 +68,7 @@ AI 不产出任何"已生效"数据——候选卡与需求草稿都必须 PM �
 ```bash
 # ① 基础设施（MySQL 8.4 + Redis 7 + RabbitMQ 3；首次启动自动建表 + 演示数据）
 docker compose up -d
-# 端口：MySQL 3308（root/root，库 feedwise）、Redis 6380、RabbitMQ 5672/管理台 15672
+# 端口：MySQL 3310（root/root，库 feedwise，GTID 开启）、Redis 6381、RabbitMQ 5672/管理台 15672
 
 # ② 后端（默认连上述端口；本机 8080 被占时用 SERVER_PORT 换端口）
 mvn spring-boot:run                      # 或 SERVER_PORT=8081 mvn spring-boot:run
@@ -80,11 +81,13 @@ BACKEND_PORT=8081 npm run dev            # http://localhost:5173
 
 登录 <http://localhost:5173>，右上角演示账号一键填充。完整 10 分钟演示脚本见 `docs/DEMO.md`。
 
-## 6. 页面（10 个）
+## 6. 页面（14 个）
 
-登录页 / 工作台统计（唯一扩展功能）/ 反馈列表（录入·导入·触发 AI）/ 反馈详情 /
-候选问题列表 / 候选问题详情（原文回查·确认·驳回·合并·AI 起草）/ 需求草稿（编辑·确认·转任务）/
-改进任务看板 / 任务详情（状态流转·验证结果·时间线）/ 全局历史查询。
+登录页（记住我）/ 工作台统计 / 反馈列表（录入·导入·触发 AI·导出 CSV）/ 反馈详情 /
+候选问题列表 / 候选问题详情（原文回查·确认·驳回·合并[二级认证]·AI 起草）/ 需求草稿（编辑·确认·转任务）/
+改进任务看板 / 任务详情（availableActions 动态按钮·验证结果·时间线）/
+全局历史查询 / **全家桶能力地图（8 组件能力矩阵+运行指标）** / **状态机可视化（Mermaid）** /
+**死信管理（台账+重放）** / **在线会话（踢人）**。
 
 六类反馈形态全覆盖：loading 骨架、空数据插画、成功/失败 Message、
 40900 状态冲突弹条、40906 重复提交提示、40300/40904 无权限提示、401 自动跳登录。
@@ -118,5 +121,6 @@ FeedWise/
 ## 9. 设计文档
 
 - [docs/DESIGN.md](docs/DESIGN.md) —— 架构先行清单（对象/状态/链路/页面/组件映射/不采用的方案与理由）
+- [docs/DESIGN-EXPAND.md](docs/DESIGN-EXPAND.md) —— 第二轮扩展清单（全家桶能力铺满：REPLAY/二级认证/deptIn/DLQ 重放/异步钩子/状态机扩展点等）
 - [docs/TEST-REPORT.md](docs/TEST-REPORT.md) —— 测试结果与缺陷修复记录
 - [docs/DEMO.md](docs/DEMO.md) —— 10 分钟核心演示脚本（含 curl 版）

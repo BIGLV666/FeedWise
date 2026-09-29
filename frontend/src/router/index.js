@@ -11,7 +11,11 @@ const routes = [
   { path: '/drafts', component: () => import('../views/DraftList.vue'), meta: { title: '需求草稿' } },
   { path: '/tasks', component: () => import('../views/TaskList.vue'), meta: { title: '改进任务' } },
   { path: '/tasks/:id', component: () => import('../views/TaskDetail.vue'), meta: { title: '任务详情' } },
-  { path: '/history', component: () => import('../views/History.vue'), meta: { title: '操作历史' } }
+  { path: '/history', component: () => import('../views/History.vue'), meta: { title: '操作历史' } },
+  { path: '/capability', component: () => import('../views/CapabilityMap.vue'), meta: { title: '全家桶能力地图' } },
+  { path: '/machines', component: () => import('../views/Machines.vue'), meta: { title: '状态机' } },
+  { path: '/dlq', component: () => import('../views/DlqManagement.vue'), meta: { title: '死信管理' } },
+  { path: '/sessions', component: () => import('../views/Sessions.vue'), meta: { title: '在线会话' } }
 ]
 
 const router = createRouter({ history: createWebHistory(), routes })
